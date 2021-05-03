@@ -51,7 +51,7 @@ class SagemcomClient:
         host,
         username,
         password,
-        authentication_method,
+        authentication_method=None,
         session: ClientSession = None,
         ssl=False,
         verify_ssl=True,
@@ -68,6 +68,7 @@ class SagemcomClient:
         self.host = host
         self.username = username
         self.authentication_method = authentication_method
+        self.password = password
         self._password_hash = self.__generate_hash(password)
 
         self.protocol = "https" if ssl else "http"
@@ -289,10 +290,12 @@ class SagemcomClient:
             raise UnauthorizedException(data)
 
     async def get_encryption_method(self):
-        """Automatically decide which encryption method to use for authentication."""
+        """Determine which encryption method to use for authentication and set it directly."""
         for encryption_method in EncryptionMethod:
             try:
                 self.authentication_method = encryption_method
+                self._password_hash = self.__generate_hash(self.password)
+
                 await self.login()
                 return encryption_method
             except LoginTimeoutException:
